@@ -1,39 +1,47 @@
-// chrome://extensions/
-const inputEl = document.getElementById('input-el')
-const buttonEl = document.getElementById('btn')
-const unOrderedlistEl = document.getElementById('list');
+let myLeads = []
+const inputEl = document.getElementById("input-el")
+const inputBtn = document.getElementById("input-btn")
+const ulEl = document.getElementById("ul-el")
+const deleteBtn = document.getElementById("delete-btn")
+const leadsFromLocalStorage = JSON.parse( localStorage.getItem("myLeads") )
+const tabBtn = document.getElementById("tab-btn")
 
-const myLeads = []
+if (leadsFromLocalStorage) {
+    myLeads = leadsFromLocalStorage
+    render(myLeads)
+}
 
-
-// inputEl.addEventListener( 'input', function() {
-//     console.log( inputEl.value)
-// })
-
-buttonEl.addEventListener('click', function() {
-
-    if ( inputEl.value !== '') {
-      
-      myLeads.push(inputEl.value)
-      inputEl.value = ''
-
-    } else {
-        alert('you have to write something')
-    }
-
-    renderItems();
+tabBtn.addEventListener("click", function(){    
+    chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
+        myLeads.push(tabs[0].url)
+        localStorage.setItem("myLeads", JSON.stringify(myLeads) )
+        render(myLeads)
+    })
 })
 
-
-function renderItems() {
-    unOrderedlistEl.textContent = '';
-    for (let i = 0; i < myLeads.length; i++) {
-        const itemEl = document.createElement('li');
-        const anchorEl = document.createElement('a');
-        anchorEl.textContent = myLeads[i];
-        anchorEl.href = myLeads[i]; 
-        anchorEl.target = "_blank"; 
-        itemEl.appendChild(anchorEl);
-        unOrderedlistEl.appendChild(itemEl); 
+function render(leads) {
+    let listItems = ""
+    for (let i = 0; i < leads.length; i++) {
+        listItems += `
+            <li>
+                <a target='_blank' href='${leads[i]}'>
+                    ${leads[i]}
+                </a>
+            </li>
+        `
     }
+    ulEl.innerHTML = listItems
 }
+
+deleteBtn.addEventListener("dblclick", function() {
+    localStorage.clear()
+    myLeads = []
+    render(myLeads)
+})
+
+inputBtn.addEventListener("click", function() {
+    myLeads.push(inputEl.value)
+    inputEl.value = ""
+    localStorage.setItem("myLeads", JSON.stringify(myLeads) )
+    render(myLeads)
+})
